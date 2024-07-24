@@ -7,7 +7,7 @@ import emoji
 extract = URLExtract()
 
 
-def fetch_stats(selected_user, df):
+def IOS_fetch_stats(selected_user, df):
     # df["user"] = df["user"].str.strip()
 
     if selected_user != "Overall":
@@ -17,12 +17,35 @@ def fetch_stats(selected_user, df):
     words = []
     for message in df["message"]:
         words.extend(message.split())
-
+    df["message"] = df["message"].astype(str)
     num_media_messages = (len(df[df["message"].str.contains("image omitted")]["message"]) +
                           len(df[df["message"].str.contains("video omitted")]["message"]))
 
     links = []
     for message in df["message"]:
+        links.extend(extract.find_urls(message))
+
+    return num_messages, len(words), num_media_messages, len(links)
+
+
+def android_fetch_stats(selected_user, df):
+    if selected_user != 'Overall':
+        df = df[df['user'] == selected_user]
+
+        # fetch the number of messages
+    num_messages = df.shape[0]
+
+    # fetch the total number of words
+    words = []
+    for message in df['message']:
+        words.extend(message.split())
+
+    # fetch number of media messages
+    num_media_messages = df[df['message'] == '<Media omitted>\n'].shape[0]
+
+    # fetch number of links shared
+    links = []
+    for message in df['message']:
         links.extend(extract.find_urls(message))
 
     return num_messages, len(words), num_media_messages, len(links)
@@ -45,6 +68,8 @@ def create_wordcloud(selected_user, df):
     temp = df[~df["message"].str.contains("image omitted", na=False)]
     temp = temp[~temp["message"].str.contains("video omitted", na=False)]
     temp = temp[~temp["message"].str.contains("sticker omitted", na=False)]
+    temp = temp[~temp["message"].str.contains("Media omitted", na=False)]
+    temp = temp[~temp["message"].str.contains("message edited", na=False)]
 
     def remove_stop_words(message):
         y = []
@@ -69,6 +94,8 @@ def most_common_words(selected_user, df):
     temp = df[~df["message"].str.contains("image omitted", na=False)]
     temp = temp[~temp["message"].str.contains("video omitted", na=False)]
     temp = temp[~temp["message"].str.contains("sticker omitted", na=False)]
+    temp = temp[~temp["message"].str.contains("Media omitted", na=False)]
+    temp = temp[~temp["message"].str.contains("message edited", na=False)]
 
     words = []
 

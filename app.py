@@ -4,12 +4,20 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import preprocessor, helper
 
-st.sidebar.title("Whats App")
+st.sidebar.title("WhatsApp Analyzer")
 uploaded_file = st.sidebar.file_uploader("Choose a file")
 if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode("utf-8")
-    df = preprocessor.preprocessor(data)
+    data = data.replace("\u202F", " ")
+    device = st.sidebar.radio(
+        "Export device",
+        ["Android", "IOS"])
+
+    if device == "IOS":
+        df = preprocessor.IOS_preprocessor(data)
+    else:
+        df = preprocessor.android_preprocessor(data)
 
     # st.dataframe(df)
 
@@ -22,7 +30,11 @@ if uploaded_file is not None:
     if st.sidebar.button("Show Analysis"):
 
         # stats Area
-        num_messages, words, num_media_messages, num_links = helper.fetch_stats(selected_user, df)
+        if device == "IOS":
+            num_messages, words, num_media_messages, num_links = helper.IOS_fetch_stats(selected_user, df)
+        else:
+            num_messages, words, num_media_messages, num_links = helper.android_fetch_stats(selected_user, df)
+
         st.title("Top Statistics")
         col1, col2, col3, col4 = st.columns(4)
 
