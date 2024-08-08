@@ -3,8 +3,20 @@ from urlextract import URLExtract
 from wordcloud import WordCloud
 from collections import Counter
 import emoji
+import zipfile
+import io
 
 extract = URLExtract()
+
+
+def extract_text_files(zip_file):
+    text_files = {}
+    with zipfile.ZipFile(zip_file, 'r') as z:
+        for file_name in z.namelist():
+            if file_name.endswith('.txt'):
+                with z.open(file_name) as f:
+                    text_files[file_name] = f.read().decode('utf-8')
+    return text_files
 
 
 def IOS_fetch_stats(selected_user, df):
