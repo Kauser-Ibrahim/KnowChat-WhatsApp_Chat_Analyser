@@ -5,21 +5,31 @@ import seaborn as sns
 import preprocessor, helper
 
 st.sidebar.title("WhatsApp Analyzer")
-uploaded_file = st.sidebar.file_uploader("Choose a file")
+uploaded_file = st.sidebar.file_uploader("Upload WhatsApp chat", type=["zip", "txt"])
+
 if uploaded_file is not None:
-    bytes_data = uploaded_file.getvalue()
-    data = bytes_data.decode("utf-8")
-    data = data.replace("\u202F", " ")
-    device = st.sidebar.radio(
-        "Export device",
-        ["Android", "IOS"])
+
+    if uploaded_file.name.endswith('.zip'):
+        text_files = helper.extract_text_files(uploaded_file)
+        if not text_files:
+            st.error("The zip file does not contain any .txt files.")
+        else:
+            for file_name, content in text_files.items():
+                content = content
+    elif uploaded_file.name.endswith('.txt'):
+        content = uploaded_file.read().decode("utf-8")
+
+    else:
+        st.error("Please upload a .txt file or a .zip file containing only .txt file.")
+
+    content = content.replace("\u202F", " ")
+
+    device = st.sidebar.radio("Export device", ["Android", "IOS"])
 
     if device == "IOS":
-        df = preprocessor.IOS_preprocessor(data)
+        df = preprocessor.IOS_preprocessor(content)
     else:
-        df = preprocessor.android_preprocessor(data)
-
-    # st.dataframe(df)
+        df = preprocessor.android_preprocessor(content)
 
     # fetch unique users
     user_list = df['user'].unique().tolist()
@@ -34,7 +44,6 @@ if uploaded_file is not None:
             num_messages, words, num_media_messages, num_links = helper.IOS_fetch_stats(selected_user, df)
         else:
             num_messages, words, num_media_messages, num_links = helper.android_fetch_stats(selected_user, df)
-
         st.title("Top Statistics")
         col1, col2, col3, col4 = st.columns(4)
 
